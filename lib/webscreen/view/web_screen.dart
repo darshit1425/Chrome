@@ -15,6 +15,18 @@ class _Web_ScreenState extends State<Web_Screen> {
   Web_provider? ProviderT;
   Web_provider? ProviderF;
   TextEditingController TxtSearch = TextEditingController();
+  PullToRefreshController? pullToRefreshController;
+
+  @override
+  void initState() {
+    pullToRefreshController = PullToRefreshController(
+      onRefresh: () {
+        ProviderT!.inAppWebViewController?.reload();
+      },
+    );
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,19 +110,26 @@ class _Web_ScreenState extends State<Web_Screen> {
                 initialUrlRequest: URLRequest(
                   url: Uri.parse("https://www.google.com/"),
                 ),
+                pullToRefreshController: pullToRefreshController!,
                 onWebViewCreated: (controller) {
                   ProviderT!.inAppWebViewController = controller;
                 },
                 onLoadError: (controller, url, code, message) {
+                  pullToRefreshController!.endRefreshing();
                   ProviderT!.inAppWebViewController = controller;
                 },
                 onLoadStart: (controller, url) {
                   ProviderT!.inAppWebViewController = controller;
                 },
                 onLoadStop: (controller, url) {
+                  pullToRefreshController!.endRefreshing();
+
                   ProviderT!.inAppWebViewController = controller;
                 },
                 onProgressChanged: (controller, progress) {
+                  if (progress == 100) {
+                    pullToRefreshController!.endRefreshing();
+                  }
                   ProviderF!.changeProgress(progress / 100);
                 },
               ),
